@@ -1,0 +1,18 @@
+services:
+  _defaults:
+    autowire: true
+    autoconfigure: true
+    public: false
+
+  Fab\RssDisplay\:
+    resource: '../Classes/*'
+
+  cache.rss_cache:
+    class: TYPO3\CMS\Core\Cache\Frontend\VariableFrontend
+    factory: ['@TYPO3\CMS\Core\Cache\CacheManager', 'getCache']
+    #factory: ['@TYPO3\CMS\Core\Bootstrap', 'createCache']
+    arguments: ['rss_cache']
+
+  Fab\RssDisplay\Controller\FeedController:
+    arguments: ['@cache.rss_cache']
+    public: true

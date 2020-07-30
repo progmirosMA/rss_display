@@ -9,12 +9,12 @@ namespace Fab\RssDisplay\Controller;
  * LICENSE.md file that was distributed with this source code.
  */
 
-use TYPO3\CMS\Core\Cache\CacheManager;
 use TYPO3\CMS\Core\Configuration\Exception\ExtensionConfigurationExtensionNotConfiguredException;
 use TYPO3\CMS\Core\Configuration\Exception\ExtensionConfigurationPathDoesNotExistException;
 use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Extbase\Mvc\Controller\ActionController;
+use TYPO3\CMS\Core\Cache\Frontend\FrontendInterface;
 
 /**
  * RSS display that will fetch the content of a RSS Feed and display it onto the Frontend.
@@ -27,6 +27,16 @@ class FeedController extends ActionController
     const PLUGIN_TYPE_USER = 'USER';
 
     /**
+     * @var TYPO3\CMS\Core\Cache\Frontend\FrontendInterface
+     */
+    private $cache;
+
+    public function __construct(FrontendInterface $cache)
+    {
+        $this->cache = $cache;
+    }
+
+    /**
      * Initialize object
      * @throws \RuntimeException
      */
@@ -37,7 +47,7 @@ class FeedController extends ActionController
         }
 
         // Check the template is a valid URL
-        if (FALSE === filter_var($this->settings['feedUrl'], FILTER_VALIDATE_URL)) {
+        if (false === filter_var($this->settings['feedUrl'], FILTER_VALIDATE_URL)) {
             $message = sprintf('Feed URL is not valid "%s". Update your settings.', $this->settings['feedUrl']);
             throw new \RuntimeException($message, 1320651278);
         }
@@ -57,11 +67,9 @@ class FeedController extends ActionController
         $this->view->setTemplatePathAndFilename($pathAbs);
 
         if ($this->canFetchResultFromCache()) {
-
             // Get content from the caching framework.
-            $result = $this->getCacheInstance()->get($this->getCacheIdentifier());
+            $result = $this->cache->get($this->getCacheIdentifier());
         } else {
-
             $feed = $this->getSimplePie($this->settings['feedUrl']);
 
             $this->view->assign('title', $feed->get_title());
@@ -72,9 +80,8 @@ class FeedController extends ActionController
             $result = $this->view->render();
 
             if ($this->isResultCachedForUserIntPlugin()) {
-
                 // Set cache for next use
-                $this->getCacheInstance()->set($this->getCacheIdentifier(), $result, array('type' => 'result'), $this->settings['cacheDuration']);
+                $this->cache->set($this->getCacheIdentifier(), $result, array('type' => 'result'), $this->settings['cacheDuration']);
             }
         }
 
@@ -88,9 +95,9 @@ class FeedController extends ActionController
      */
     protected function isResultCachedForUserIntPlugin()
     {
-        $result = FALSE;
+        $result = false;
         if ($this->getPluginType() === self::PLUGIN_TYPE_USER_INT) {
-            $result = TRUE;
+            $result = true;
         }
         return $result;
     }
@@ -102,12 +109,12 @@ class FeedController extends ActionController
      */
     protected function canFetchResultFromCache()
     {
-        $result = FALSE;
+        $result = false;
         if ($this->getPluginType() === self::PLUGIN_TYPE_USER_INT
-            && $this->getCacheInstance()->has($this->getCacheIdentifier())
+            && $this->cache->has($this->getCacheIdentifier())
             && !GeneralUtility::_GET('no_cache')
         ) {
-            $result = TRUE;
+            $result = true;
         }
         return $result;
     }
@@ -118,7 +125,8 @@ class FeedController extends ActionController
      * @return \SimplePie
      */
     protected function getSimplePie($feedUrl)
-    { // Create a new instance of the SimplePie object and fetch the feed.
+    {
+        // Create a new instance of the SimplePie object and fetch the feed.
         $feed = new \SimplePie();
         //external request by use of a proxy
         $feed->set_raw_data(GeneralUtility::getUrl($feedUrl));
@@ -155,25 +163,4 @@ class FeedController extends ActionController
         }
         return $pluginType;
     }
-
-    /**
-     * Initialize cache instance to be ready to use
-     *
-     * @return \TYPO3\CMS\Core\Cache\Frontend\FrontendInterface
-     */
-    protected function getCacheInstance()
-    {
-        return $this->getCacheManager()->getCache('rssdisplay');
-    }
-
-    /**
-     * Return the Cache Manager
-     *
-     * @return object|CacheManager
-     */
-    protected function getCacheManager()
-    {
-        return GeneralUtility::makeInstance(CacheManager::class);
-    }
-
 }

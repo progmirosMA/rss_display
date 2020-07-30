@@ -32,10 +32,10 @@ if (false === isset($configuration['autoload_typoscript']) || true === (bool)$co
     $pluginType === 'USER_INT' ? ['Feed' => 'show'] : []
 );
 
-// cache configuration, see
-// https://docs.typo3.org/typo3cms/CoreApiReference/ApiOverview/CachingFramework/Configuration/Index.html#cache-configurations
-$TYPO3_CONF_VARS['SYS']['caching']['cacheConfigurations']['rssdisplay']['frontend'] = \TYPO3\CMS\Core\Cache\Frontend\StringFrontend::class;
-$TYPO3_CONF_VARS['SYS']['caching']['cacheConfigurations']['rssdisplay']['groups'] = ['all', 'rssdisplay'];
+if (!is_array($GLOBALS['TYPO3_CONF_VARS']['SYS']['caching']['cacheConfigurations']['rss_cache'])) {
+    $GLOBALS['TYPO3_CONF_VARS']['SYS']['caching']['cacheConfigurations']['rss_cache'] = [];
+}
+
 
 if (!\TYPO3\CMS\Core\Core\Environment::isComposerMode()) {
     # Install PSR-0-compatible class autoloader for SimplePie Library in Resources/PHP/SimplePie
@@ -45,10 +45,25 @@ if (!\TYPO3\CMS\Core\Core\Environment::isComposerMode()) {
         if (strpos($class, 'SimplePie') !== 0) {
             return;
         }
-
         require sprintf('%sResources/Private/PHP/SimplePie/%s',
             \TYPO3\CMS\Core\Utility\ExtensionManagementUtility::extPath('rss_display'),
             DIRECTORY_SEPARATOR . str_replace('_', DIRECTORY_SEPARATOR, $class) . '.php'
         );
     });
 }
+
+call_user_func(function () {
+    /**
+     * Register icons
+     */
+    $identifier = 'plugins_tx_rssdisplay_pi1_wizard';
+
+    $iconRegistry = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(
+        \TYPO3\CMS\Core\Imaging\IconRegistry::class
+    );
+    $iconRegistry->registerIcon(
+        $identifier, // Icon-Identifier, z.B. tx-myext-action-preview
+        \TYPO3\CMS\Core\Imaging\IconProvider\BitmapIconProvider::class,
+        ['source' => 'EXT:rss_display/Resources/Public/Images/RssDisplay.png']
+    );
+});
