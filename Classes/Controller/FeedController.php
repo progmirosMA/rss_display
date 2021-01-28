@@ -15,6 +15,7 @@ use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Extbase\Mvc\Controller\ActionController;
 use TYPO3\CMS\Core\Cache\Frontend\FrontendInterface;
+use TYPO3\CMS\Core\Core\Environment;
 
 /**
  * RSS display that will fetch the content of a RSS Feed and display it onto the Frontend.
@@ -130,7 +131,7 @@ class FeedController extends ActionController
         $feed = new \SimplePie();
         //external request by use of a proxy
         $feed->set_raw_data(GeneralUtility::getUrl($feedUrl));
-        $location = PATH_site . 'typo3temp';
+        $location = Environment::getPublicPath() . 'typo3temp';
         $feed->set_cache_location($location);
         $feed->init();
         return $feed;
