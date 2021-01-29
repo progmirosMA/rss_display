@@ -56,7 +56,7 @@ class SimplePie_Parse_Date
      * @access protected
      * @var string
      */
-    var $date;
+    protected $date;
 
     /**
      * List of days, calendar day name => ordinal day number in the week
@@ -64,7 +64,7 @@ class SimplePie_Parse_Date
      * @access protected
      * @var array
      */
-    var $day = array(
+    protected $day = array(
         // English
         'mon' => 1,
         'monday' => 1,
@@ -153,7 +153,7 @@ class SimplePie_Parse_Date
      * @access protected
      * @var array
      */
-    var $month = array(
+    protected $month = array(
         // English
         'jan' => 1,
         'january' => 1,
@@ -311,7 +311,7 @@ class SimplePie_Parse_Date
      * @access protected
      * @var array
      */
-    var $timezone = array(
+    protected $timezone = array(
         'ACDT' => 37800,
         'ACIT' => 28800,
         'ACST' => 34200,
@@ -520,7 +520,7 @@ class SimplePie_Parse_Date
      * @access protected
      * @var string
      */
-    var $day_pcre;
+    protected $day_pcre;
 
     /**
      * Cached PCRE for SimplePie_Parse_Date::$month
@@ -528,7 +528,7 @@ class SimplePie_Parse_Date
      * @access protected
      * @var string
      */
-    var $month_pcre;
+    protected $month_pcre;
 
     /**
      * Array of user-added callback methods
@@ -536,7 +536,7 @@ class SimplePie_Parse_Date
      * @access private
      * @var array
      */
-    var $built_in = array();
+    protected $built_in = array();
 
     /**
      * Array of user-added callback methods
@@ -544,7 +544,7 @@ class SimplePie_Parse_Date
      * @access private
      * @var array
      */
-    var $user = array();
+    protected $user = array();
 
     /**
      * Create new SimplePie_Parse_Date object, and set self::day_pcre,
@@ -558,21 +558,17 @@ class SimplePie_Parse_Date
         $this->month_pcre = '(' . implode('|', array_keys($this->month)) . ')';
 
         static $cache;
-        if (!isset($cache[get_class($this)]))
-        {
+        if (!isset($cache[get_class($this)])) {
             $all_methods = get_class_methods($this);
 
-            foreach ($all_methods as $method)
-            {
-                if (strtolower(substr($method, 0, 5)) === 'date_')
-                {
+            foreach ($all_methods as $method) {
+                if (strtolower(substr($method, 0, 5)) === 'date_') {
                     $cache[get_class($this)][] = $method;
                 }
             }
         }
 
-        foreach ($cache[get_class($this)] as $method)
-        {
+        foreach ($cache[get_class($this)] as $method) {
             $this->built_in[] = $method;
         }
     }
@@ -585,8 +581,7 @@ class SimplePie_Parse_Date
     public static function get()
     {
         static $object;
-        if (!$object)
-        {
+        if (!$object) {
             $object = new SimplePie_Parse_Date;
         }
         return $object;
@@ -602,18 +597,14 @@ class SimplePie_Parse_Date
      */
     public function parse($date)
     {
-        foreach ($this->user as $method)
-        {
-            if (($returned = call_user_func($method, $date)) !== false)
-            {
+        foreach ($this->user as $method) {
+            if (($returned = call_user_func($method, $date)) !== false) {
                 return $returned;
             }
         }
 
-        foreach ($this->built_in as $method)
-        {
-            if (($returned = call_user_func(array($this, $method), $date)) !== false)
-            {
+        foreach ($this->built_in as $method) {
+            if (($returned = call_user_func(array($this, $method), $date)) !== false) {
                 return $returned;
             }
         }
@@ -630,12 +621,9 @@ class SimplePie_Parse_Date
      */
     public function add_callback($callback)
     {
-        if (is_callable($callback))
-        {
+        if (is_callable($callback)) {
             $this->user[] = $callback;
-        }
-        else
-        {
+        } else {
             trigger_error('User-supplied function must be a valid callback', E_USER_WARNING);
         }
     }
@@ -651,16 +639,14 @@ class SimplePie_Parse_Date
     public function date_w3cdtf($date)
     {
         static $pcre;
-        if (!$pcre)
-        {
+        if (!$pcre) {
             $year = '([0-9]{4})';
             $month = $day = $hour = $minute = $second = '([0-9]{2})';
             $decimal = '([0-9]*)';
             $zone = '(?:(Z)|([+\-])([0-9]{1,2}):?([0-9]{1,2}))';
             $pcre = '/^' . $year . '(?:-?' . $month . '(?:-?' . $day . '(?:[Tt\x09\x20]+' . $hour . '(?::?' . $minute . '(?::?' . $second . '(?:.' . $decimal . ')?)?)?' . $zone . ')?)?)?$/';
         }
-        if (preg_match($pcre, $date, $match))
-        {
+        if (preg_match($pcre, $date, $match)) {
             /*
             Capturing subpatterns:
             1: Year
@@ -674,31 +660,25 @@ class SimplePie_Parse_Date
             9: Timezone ±
             10: Timezone hours
             11: Timezone minutes
-            */
+             */
 
             // Fill in empty matches
-            for ($i = count($match); $i <= 3; $i++)
-            {
+            for ($i = count($match); $i <= 3; $i++) {
                 $match[$i] = '1';
             }
 
-            for ($i = count($match); $i <= 7; $i++)
-            {
+            for ($i = count($match); $i <= 7; $i++) {
                 $match[$i] = '0';
             }
 
             // Numeric timezone
-            if (isset($match[9]) && $match[9] !== '')
-            {
+            if (isset($match[9]) && $match[9] !== '') {
                 $timezone = $match[10] * 3600;
                 $timezone += $match[11] * 60;
-                if ($match[9] === '-')
-                {
+                if ($match[9] === '-') {
                     $timezone = 0 - $timezone;
                 }
-            }
-            else
-            {
+            } else {
                 $timezone = 0;
             }
 
@@ -706,9 +686,7 @@ class SimplePie_Parse_Date
             $second = round((int)$match[6] + (int)$match[7] / pow(10, strlen($match[7])));
 
             return gmmktime($match[4], $match[5], $second, $match[2], $match[3], $match[1]) - $timezone;
-        }
-        else
-        {
+        } else {
             return false;
         }
     }
@@ -729,25 +707,18 @@ class SimplePie_Parse_Date
 
         $output = '';
 
-        while ($position < $length && ($pos = strpos($string, '(', $position)) !== false)
-        {
+        while ($position < $length && ($pos = strpos($string, '(', $position)) !== false) {
             $output .= substr($string, $position, $pos - $position);
             $position = $pos + 1;
-            if ($pos === 0 || $string[$pos - 1] !== '\\')
-            {
+            if ($pos === 0 || $string[$pos - 1] !== '\\') {
                 $depth++;
-                while ($depth && $position < $length)
-                {
+                while ($depth && $position < $length) {
                     $position += strcspn($string, '()', $position);
-                    if ($string[$position - 1] === '\\')
-                    {
+                    if ($string[$position - 1] === '\\') {
                         $position++;
                         continue;
-                    }
-                    elseif (isset($string[$position]))
-                    {
-                        switch ($string[$position])
-                        {
+                    } elseif (isset($string[$position])) {
+                        switch ($string[$position]) {
                             case '(':
                                 $depth++;
                                 break;
@@ -757,15 +728,11 @@ class SimplePie_Parse_Date
                                 break;
                         }
                         $position++;
-                    }
-                    else
-                    {
+                    } else {
                         break;
                     }
                 }
-            }
-            else
-            {
+            } else {
                 $output .= '(';
             }
         }
@@ -783,8 +750,7 @@ class SimplePie_Parse_Date
     public function date_rfc2822($date)
     {
         static $pcre;
-        if (!$pcre)
-        {
+        if (!$pcre) {
             $wsp = '[\x09\x20]';
             $fws = '(?:' . $wsp . '+|' . $wsp . '*(?:\x0D\x0A' . $wsp . '+)+)';
             $optional_fws = $fws . '?';
@@ -798,8 +764,7 @@ class SimplePie_Parse_Date
             $zone = '(?:' . $num_zone . '|' . $character_zone . ')';
             $pcre = '/(?:' . $optional_fws . $day_name . $optional_fws . ',)?' . $optional_fws . $day . $fws . $month . $fws . $year . $fws . $hour . $optional_fws . ':' . $optional_fws . $minute . '(?:' . $optional_fws . ':' . $optional_fws . $second . ')?' . $fws . $zone . '/i';
         }
-        if (preg_match($pcre, $this->remove_rfc2822_comments($date), $match))
-        {
+        if (preg_match($pcre, $this->remove_rfc2822_comments($date), $match)) {
             /*
             Capturing subpatterns:
             1: Day name
@@ -813,56 +778,42 @@ class SimplePie_Parse_Date
             9: Timezone hours
             10: Timezone minutes
             11: Alphabetic timezone
-            */
+             */
 
             // Find the month number
             $month = $this->month[strtolower($match[3])];
 
             // Numeric timezone
-            if ($match[8] !== '')
-            {
+            if ($match[8] !== '') {
                 $timezone = $match[9] * 3600;
                 $timezone += $match[10] * 60;
-                if ($match[8] === '-')
-                {
+                if ($match[8] === '-') {
                     $timezone = 0 - $timezone;
                 }
-            }
             // Character timezone
-            elseif (isset($this->timezone[strtoupper($match[11])]))
-            {
+            } elseif (isset($this->timezone[strtoupper($match[11])])) {
                 $timezone = $this->timezone[strtoupper($match[11])];
-            }
             // Assume everything else to be -0000
-            else
-            {
+            } else {
                 $timezone = 0;
             }
 
             // Deal with 2/3 digit years
-            if ($match[4] < 50)
-            {
+            if ($match[4] < 50) {
                 $match[4] += 2000;
-            }
-            elseif ($match[4] < 1000)
-            {
+            } elseif ($match[4] < 1000) {
                 $match[4] += 1900;
             }
 
             // Second is optional, if it is empty set it to zero
-            if ($match[7] !== '')
-            {
+            if ($match[7] !== '') {
                 $second = $match[7];
-            }
-            else
-            {
+            } else {
                 $second = 0;
             }
 
             return gmmktime($match[5], $match[6], $second, $month, $match[2], $match[4]) - $timezone;
-        }
-        else
-        {
+        } else {
             return false;
         }
     }
@@ -876,8 +827,7 @@ class SimplePie_Parse_Date
     public function date_rfc850($date)
     {
         static $pcre;
-        if (!$pcre)
-        {
+        if (!$pcre) {
             $space = '[\x09\x20]+';
             $day_name = $this->day_pcre;
             $month = $this->month_pcre;
@@ -886,8 +836,7 @@ class SimplePie_Parse_Date
             $zone = '([A-Z]{1,5})';
             $pcre = '/^' . $day_name . ',' . $space . $day . '-' . $month . '-' . $year . $space . $hour . ':' . $minute . ':' . $second . $space . $zone . '$/i';
         }
-        if (preg_match($pcre, $date, $match))
-        {
+        if (preg_match($pcre, $date, $match)) {
             /*
             Capturing subpatterns:
             1: Day name
@@ -898,36 +847,28 @@ class SimplePie_Parse_Date
             6: Minute
             7: Second
             8: Timezone
-            */
+             */
 
             // Month
             $month = $this->month[strtolower($match[3])];
 
             // Character timezone
-            if (isset($this->timezone[strtoupper($match[8])]))
-            {
+            if (isset($this->timezone[strtoupper($match[8])])) {
                 $timezone = $this->timezone[strtoupper($match[8])];
-            }
             // Assume everything else to be -0000
-            else
-            {
+            } else {
                 $timezone = 0;
             }
 
             // Deal with 2 digit year
-            if ($match[4] < 50)
-            {
+            if ($match[4] < 50) {
                 $match[4] += 2000;
-            }
-            else
-            {
+            } else {
                 $match[4] += 1900;
             }
 
             return gmmktime($match[5], $match[6], $match[7], $month, $match[2], $match[4]) - $timezone;
-        }
-        else
-        {
+        } else {
             return false;
         }
     }
@@ -941,8 +882,7 @@ class SimplePie_Parse_Date
     public function date_asctime($date)
     {
         static $pcre;
-        if (!$pcre)
-        {
+        if (!$pcre) {
             $space = '[\x09\x20]+';
             $wday_name = $this->day_pcre;
             $mon_name = $this->month_pcre;
@@ -952,8 +892,7 @@ class SimplePie_Parse_Date
             $terminator = '\x0A?\x00?';
             $pcre = '/^' . $wday_name . $space . $mon_name . $space . $day . $space . $hour . ':' . $min . ':' . $sec . $space . $year . $terminator . '$/i';
         }
-        if (preg_match($pcre, $date, $match))
-        {
+        if (preg_match($pcre, $date, $match)) {
             /*
             Capturing subpatterns:
             1: Day name
@@ -963,13 +902,11 @@ class SimplePie_Parse_Date
             5: Minute
             6: Second
             7: Year
-            */
+             */
 
             $month = $this->month[strtolower($match[2])];
             return gmmktime($match[4], $match[5], $match[6], $month, $match[3], $match[7]);
-        }
-        else
-        {
+        } else {
             return false;
         }
     }
@@ -983,14 +920,10 @@ class SimplePie_Parse_Date
     public function date_strtotime($date)
     {
         $strtotime = strtotime($date);
-        if ($strtotime === -1 || $strtotime === false)
-        {
+        if ($strtotime === -1 || $strtotime === false) {
             return false;
-        }
-        else
-        {
+        } else {
             return $strtotime;
         }
     }
 }
-
